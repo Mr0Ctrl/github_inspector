@@ -1,0 +1,4 @@
+# GitHub Inspector is designed to work with ZERO external dependencies (Python 3.8+ standard library).
+# Optional dependencies for enhanced formatting or compatibility if desired:
+# python-dotenv>=1.0.0
+# requests>=2.31.0
