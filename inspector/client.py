@@ -274,9 +274,61 @@ class GitHubClient:
     def get_file_content(self, owner: str, repo: str, path: str) -> Optional[str]:
         """Fetch content of a specific file."""
         try:
-            data = self.get(f"/repos/{owner}/{repo}/contents/{path.lstrip('/')}")
+            quoted_path = urllib.parse.quote(path.lstrip('/'))
+            data = self.get(f"/repos/{owner}/{repo}/contents/{quoted_path}")
             if data and "content" in data:
                 return base64.b64decode(data["content"]).decode("utf-8", errors="replace")
             return None
         except GitHubAPIError:
             return None
+
+    def get_code_frequency(self, owner: str, repo: str) -> List[List[int]]:
+        """
+        Fetch weekly lines added and deleted history: [[timestamp, additions, deletions], ...]
+        GitHub computes stats asynchronously on demand (returning 202 / empty).
+        We retry with brief pauses to allow GitHub's background worker to finish compiling.
+        """
+        try:
+            for attempt in range(4):
+                res = self.get(f"/repos/{owner}/{repo}/stats/code_frequency")
+                if res and isinstance(res, list) and len(res) > 0:
+                    return res
+                # GitHub is computing stats in the background, wait briefly
+                time.sleep(1.5)
+            return []
+        except Exception:
+            return []
+
+    def get_commit_churn_sample(self, owner: str, repo: str, limit: int = 15) -> Tuple[int, int]:
+        """
+        Fallback when GitHub stats cache is unavailable:
+        Inspects recent commits directly to extract additions and deletions.
+        """
+        total_add = 0
+        total_del = 0
+        try:
+            commits = self.get(f"/repos/{owner}/{repo}/commits", params={"per_page": limit})
+            if not commits or not isinstance(commits, list):
+                return 0, 0
+
+            for c in commits:
+                sha = c.get("sha")
+                if sha:
+                    detail = self.get(f"/repos/{owner}/{repo}/commits/{sha}")
+                    stats = detail.get("stats") if detail else None
+                    if stats:
+                        total_add += stats.get("additions", 0)
+                        total_del += stats.get("deletions", 0)
+            return total_add, total_del
+        except Exception:
+            return total_add, total_del
+
+    def get_tree_files(self, owner: str, repo: str, branch: str = "main") -> List[str]:
+        """Fetch all file paths across the repository recursively."""
+        try:
+            data = self.get(f"/repos/{owner}/{repo}/git/trees/{branch}", params={"recursive": "1"})
+            if data and isinstance(data, dict) and "tree" in data:
+                return [item.get("path", "") for item in data["tree"] if item.get("type") == "blob"]
+            return []
+        except GitHubAPIError:
+            return []

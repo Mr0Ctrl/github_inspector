@@ -1,6 +1,6 @@
 import json
 import re
-from typing import List, Dict, Set, Optional
+from typing import List, Dict, Set, Optional, Any
 
 # Knowledge base of frameworks, libraries, and devops tools
 FRAMEWORK_CATALOG = {
@@ -53,6 +53,9 @@ FRAMEWORK_CATALOG = {
         "Anthropic SDK": [r"\banthropic\b"],
         "Pandas": [r"\bpandas\b"],
         "NumPy": [r"\bnumpy\b"],
+        "Matplotlib": [r"\bmatplotlib\b", r"\bpyplot\b"],
+        "Seaborn": [r"\bseaborn\b", r"\bsns\b"],
+        "SciPy": [r"\bscipy\b"],
         "Streamlit": [r"\bstreamlit\b"],
         "Gradio": [r"\bgradio\b"],
         "OpenCV": [r"\bopencv-python\b", r"\bcv2\b"],
@@ -153,10 +156,16 @@ class FrameworkDetector:
 
         return result
 
-    def _match_patterns(self, text: str, detected: Dict[str, Set[str]]):
+    def _match_patterns(self, text: str, detected: Dict[str, Any]):
         for category, framework_map in FRAMEWORK_CATALOG.items():
             for framework_name, patterns in framework_map.items():
                 for pat in patterns:
                     if re.search(pat, text, re.IGNORECASE):
-                        detected[category].add(framework_name)
+                        if category not in detected:
+                            detected[category] = set()
+                        if isinstance(detected[category], list):
+                            if framework_name not in detected[category]:
+                                detected[category].append(framework_name)
+                        else:
+                            detected[category].add(framework_name)
                         break

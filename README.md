@@ -71,7 +71,7 @@ python3 main.py --visibility public
 | Perspective | Details Extracted |
 | :--- | :--- |
 | **Repository Identity** | Name, description, topics/tags, homepage/demo URL, license (SPDX), visibility (Public/Private), default branch. |
-| **Codebase Scale** | Repository size (KB/MB) and scale categorization (*Micro < 1MB*, *Small 1-10MB*, *Medium 10-50MB*, *Large 50-200MB*, *Enterprise > 200MB*). |
+| **Codebase Scale** | Measured by **pure source code bytes** (ignoring media/images/binaries) to prevent asset inflation, alongside raw disk volume. |
 | **Language Distribution** | Byte-level volume breakdown, exact percentage calculation, and visual progress distribution bars. |
 | **Frameworks & Tech Stack** | Scans manifest files (`package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `Dockerfile`, etc.) to detect frameworks across Web, AI/ML, Databases/ORMs, DevOps, and CI/CD. |
 | **Development Timeline** | First commit date, latest commit date, development lifespan (e.g. `2 years, 3 months` or `18 days`), and days since last commit. |

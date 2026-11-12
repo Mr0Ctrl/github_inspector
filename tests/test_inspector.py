@@ -65,9 +65,12 @@ class TestInspector(unittest.TestCase):
         dur = format_duration(start, now)
         self.assertIn("year", dur)
 
-        self.assertIn("Micro", categorize_scale(500))
-        self.assertIn("Small", categorize_scale(5000))
-        self.assertIn("Medium", categorize_scale(25000))
+        lbl, note = categorize_scale(50 * 1024, 500)
+        self.assertIn("Micro", lbl)
+        lbl, note = categorize_scale(500 * 1024, 2000)
+        self.assertIn("Small", lbl)
+        lbl, note = categorize_scale(5 * 1024 * 1024, 10000)
+        self.assertIn("Medium", lbl)
 
     def test_markdown_generator(self):
         temp_dir = Path(tempfile.mkdtemp())
@@ -87,7 +90,9 @@ class TestInspector(unittest.TestCase):
                 homepage="https://agent.example.com",
                 topics=["ai", "agents", "python"],
                 size_kb=3200,
-                scale_label="Small (3.1 MB)",
+                code_bytes=94000,
+                scale_label="Small (91.8 KB code)",
+                asset_breakdown_note="Source code: 91.8 KB (Disk: 3200 KB).",
                 primary_language="Python",
                 language_breakdown={"Python": {"bytes": 80000, "percentage": 85.0}, "Shell": {"bytes": 14000, "percentage": 15.0}},
                 frameworks_by_category={"AI / Data Science & ML": ["PyTorch", "LangChain"], "Web Frameworks": ["FastAPI"]},
@@ -116,7 +121,16 @@ class TestInspector(unittest.TestCase):
                 open_issues_count=2,
                 root_files=["requirements.txt", "Dockerfile", "README.md", "main.py"],
                 readme_excerpt="This is an intelligent agent.",
-                llm_summary="ai-agent is an active Python repo."
+                llm_summary="ai-agent is an active Python repo.",
+                is_stub_or_empty=False,
+                repo_classification="Substantive Project",
+                stub_reason=None,
+                lines_added=4500,
+                lines_deleted=1200,
+                net_lines=3300,
+                total_churn=5700,
+                avg_churn_per_commit=38.0,
+                change_intensity="Additive growth"
             )
 
             profile = {
@@ -139,12 +153,13 @@ class TestInspector(unittest.TestCase):
             self.assertIn('primary_language: "Python"', repo_content)
             self.assertIn("FastAPI", repo_content)
             self.assertIn("150 commits", repo_content)
-            self.assertIn("MIT License", repo_content)
+            self.assertIn("4,500", repo_content)
+            self.assertIn("Substantive Project", repo_content)
 
             index_content = index_md.read_text(encoding="utf-8")
             self.assertIn("Test User", index_content)
             self.assertIn("ai-agent", index_content)
-            self.assertIn("Python (1 repositories)", index_content)
+            self.assertIn("Substantive Codebases", index_content)
         finally:
             shutil.rmtree(temp_dir)
 
